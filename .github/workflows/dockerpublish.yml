@@ -1,0 +1,60 @@
+name: Docker
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+      - staging
+
+  # Run tests for any PRs.
+  pull_request:
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+
+# Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set branch tag
+        id: branch_tag
+        run: |
+          # Strip git ref prefix from version
+          branch_tag=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && branch_tag=$(echo $branch_tag | sed -e 's/^v//')
+
+          # preprend with "branch_" so we know what the tag means by looking at it.
+          branch_tag="branch_${branch_tag}"
+
+          echo ::set-output name=tag::$(echo $branch_tag)
+
+      - name: Set commit tag
+        id: commit_tag
+        run: |
+          # The short git commit object name.
+          commit_tag=${GITHUB_SHA::8}
+
+          # prepend with "commit_" so we know what the tag means by looking at it.
+          commit_tag="commit_${commit_tag}"
+
+          echo ::set-output name=tag::$(echo $commit_tag)
+
+      - name: echo output
+        run: |
+          # The image name represents both the local image name and the remote image repository.
+          branch_tag=${{ steps.branch_tag.tag }}
+          commit_tag=${{ steps.commit_tag.tag }}
+          echo "${branch_tag}"
+          echo "${commit_tag}"
