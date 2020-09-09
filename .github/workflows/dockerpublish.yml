@@ -52,7 +52,7 @@ jobs:
       - name: echo output
         run: |
           # The image name represents both the local image name and the remote image repository.
-          branch_tag="${{ steps.branch_tag.tag }}"
-          commit_tag="${{ steps.commit_tag.tag }}"
+          branch_tag="${{ steps.branch_tag.outputs.tag }}"
+          commit_tag="${{ steps.commit_tag.outputs.tag }}"
           echo "${branch_tag}"
           echo "${commit_tag}"
